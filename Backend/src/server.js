@@ -11,6 +11,7 @@ const app = express();
 const __dirname = path.resolve();
 
 const PORT = process.env.PORT || 3000;
+app.use(express.json()) // req.body
 
 app.use("/api/auth", authRoutes)
 app.use("/api/messages", messageRoutes)
@@ -24,5 +25,16 @@ if(process.env.NODE_ENV === "production") {
     })
 }
 
-app.listen(PORT, () => console.log("Server is running on port: " + PORT)
-);
+import { initializeDB } from './lib/db.js';
+
+// initialize DB and start server
+(async () => {
+  try {
+    await initializeDB();
+    app.listen(PORT, () => console.log("Server is running on port: " + PORT));
+  } catch (err) {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  }
+})();
+
