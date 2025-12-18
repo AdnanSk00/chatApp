@@ -4,13 +4,16 @@ import { generateToken } from "../lib/utils.js";
 
 export const signup = async (req, res) => {
   const { fullName, email, password } = req.body;
+  // Ensure password is treated as a string (clients might send numeric-only passwords as numbers)
+  const pwd = typeof password === 'string' ? password : String(password ?? '');
 
   try {
-    if (!fullName || !email || !password) {
+    if (!fullName || !email || !pwd) {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    if (password.length < 6) {
+    const trimmedPwd = pwd.trim();
+    if (trimmedPwd.length < 6) {
       return res.status(400).json({ message: 'Password must be at least 6 characters' });
     }
 
@@ -23,7 +26,7 @@ export const signup = async (req, res) => {
     if (existingUser) return res.status(400).json({ message: 'Email already exists' });
 
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(trimmedPwd, salt);
 
     const newUser = await createUser({ fullName, email, password: hashedPassword });
 
