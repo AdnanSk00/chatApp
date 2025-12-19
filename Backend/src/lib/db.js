@@ -2,17 +2,15 @@
 
 import pkg from 'pg';
 const { Pool } = pkg;
-import dotenv from 'dotenv';
-
-dotenv.config();
+import { ENV } from './env.js';
 
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT, 10) || 5432,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  host: ENV.DB_HOST || 'localhost',
+  port: parseInt(ENV.DB_PORT, 10) || 5432,
+  user: ENV.DB_USER,
+  password: ENV.DB_PASSWORD,
+  database: ENV.DB_NAME,
+  ssl: ENV.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
 });
 
 export const initializeDB = async () => {
