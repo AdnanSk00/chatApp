@@ -8,17 +8,18 @@ export const signup = async (req, res) => {
   const { fullName, email, password } = req.body;
   // Ensure password is treated as a string (clients might send numeric-only passwords as numbers)
   const pwd = typeof password === 'string' ? password : String(password ?? '');
+  const trimmedPwd = pwd.trim();
 
   try {
     if (!fullName || !email || !pwd) {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    const trimmedPwd = pwd.trim();
-    if (trimmedPwd.length < 6) {
+    if (pwd.length < 6) {
       return res.status(400).json({ message: 'Password must be at least 6 characters' });
     }
 
+    // check if email is valid: regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ message: 'Please enter a valid email address' });
@@ -27,6 +28,7 @@ export const signup = async (req, res) => {
     const existingUser = await findUserByEmail(email);
     if (existingUser) return res.status(400).json({ message: 'Email already exists' });
 
+    // 123456 => $dnjasdkasj_?dmsakmk
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(trimmedPwd, salt);
 
@@ -61,3 +63,42 @@ export const signup = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+export const login = async (req, res) => {
+  const { email, password } = req.body;
+  const pwd = typeof password === 'string' ? password : String(password ?? '');
+  const trimmedPwd = pwd.trim();
+
+  if (!email || !pwd) {
+    return res.status(400).json({ message: 'Email and password are required' });
+  }
+  
+  try {
+    const user = await findUserByEmail(email);
+    if (!user) return res.status(400).json({ message: 'Invalid credentials...by email' });
+
+    // never tell the client which one is incorrect: password or email
+
+    const isPasswordValid = await bcrypt.compare(trimmedPwd, user.password);
+    if (!isPasswordValid) return res.status(400).json({ message: 'Invalid credentials...by password' });
+
+    generateToken(user.id, res);
+
+    res.status(200).json({
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      profilePic: user.profilePic,
+    });
+
+  } catch (error){
+    console.log('Error in login controller:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const logout = (_, res) => {
+  res.cookie("jwt", "", { maxAge: 0});
+  res.status(200).json({ message: "Logged out successfully"})
+
+}
