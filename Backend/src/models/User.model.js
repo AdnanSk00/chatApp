@@ -10,6 +10,7 @@ const mapUserRow = (row) => {
     password: row.password ?? null,
     profilePic: row.profilepic ?? row.profile_pic ?? row.profilePic ?? '',
     createdAt: row.createdat ?? row.created_at ?? row.createdAt ?? null,
+    updatedAt: row.updatedat ?? row.updated_at ?? row.updatedAt ?? null,
   };
 };
 
@@ -33,4 +34,27 @@ export const createUser = async ({ fullName, email, password }) => {
   // return rows[0];
 };
 
-export default { findUserByEmail, findUserById, createUser };
+export const findUserByIdAndUpdate = async (id, updates = {}, options = {}) => {
+  if (!id) throw new Error('User id is required');
+
+  const keys = Object.keys(updates);
+  if (keys.length === 0) {
+    // nothing to update; return current user
+    return await findUserById(id);
+  }
+
+  // Build SET clause dynamically: e.g. "fullName = $1, profilePic = $2"
+  const setClauses = keys.map((k, i) => `${k} = $${i + 1}`).join(', ');
+  const values = keys.map((k) => updates[k]);
+  // add id as last parameter
+  values.push(id);
+
+  const { rows } = await pool.query(
+    `UPDATE users SET ${setClauses} WHERE id = $${keys.length + 1} RETURNING *`,
+    values
+  );
+
+  return mapUserRow(rows[0]);
+};
+
+export default { findUserByEmail, findUserById, createUser, findUserByIdAndUpdate };
