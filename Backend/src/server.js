@@ -27,12 +27,18 @@ if(ENV.NODE_ENV === "production") {
     })
 }
 
-import { initializeDB } from './lib/db.js';
+import { connectDB } from './lib/db.js';
+import { ensureUsersTable } from './models/User.js';
+import { ensureMessagesTable } from './models/Message.js';
 
 // initialize DB and start server
 (async () => {
   try {
-    await initializeDB();
+    await connectDB();
+    // create tables (schema-related tasks should live in their models)
+    await ensureUsersTable();
+    await ensureMessagesTable();
+
     const server = app.listen(PORT, () => console.log("Server is running on port: " + PORT));
     server.on('error', (err) => {
       if (err.code === 'EADDRINUSE') {
