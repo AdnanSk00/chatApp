@@ -1,5 +1,19 @@
 import pool from '../lib/db.js';
 
+export const ensureUsersTable = async () => {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      fullName TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      profilePic TEXT DEFAULT '',
+      createdAt TIMESTAMP DEFAULT NOW(),
+      updatedAt TIMESTAMP DEFAULT NOW()
+    );
+  `);
+};
+
 // Helper to map DB row (lowercase keys) to camelCase properties used throughout the app
 const mapUserRow = (row) => {
   if (!row) return null;
@@ -17,7 +31,6 @@ const mapUserRow = (row) => {
 export const findUserByEmail = async (email) => {
   const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
   return mapUserRow(rows[0]);
-  // return rows[0];
 };
 
 export const findUserById = async (id) => {
@@ -31,7 +44,6 @@ export const createUser = async ({ fullName, email, password }) => {
     [fullName, email, password]
   );
   return mapUserRow(rows[0]);
-  // return rows[0];
 };
 
 export const findUserByIdAndUpdate = async (id, updates = {}, options = {}) => {
@@ -57,4 +69,36 @@ export const findUserByIdAndUpdate = async (id, updates = {}, options = {}) => {
   return mapUserRow(rows[0]);
 };
 
-export default { findUserByEmail, findUserById, createUser, findUserByIdAndUpdate };
+// Return all users except the logged-in user, omitting password
+export const getAllUsers = async (loggedInUserId) => {
+  const { rows } = await pool.query(
+    `SELECT id, fullName, email, profilePic, createdAt, updatedAt FROM users WHERE id != $1 ORDER BY fullName ASC`,
+    [loggedInUserId]
+  );
+  return rows;
+};
+
+// Get users by ids (array) and omit sensitive fields such as password
+export const getUsersByIds = async (ids = []) => {
+  if (!Array.isArray(ids) || ids.length === 0) return [];
+  // Ensure values are integers
+  const intIds = ids.map((v) => parseInt(v, 10)).filter(Boolean);
+  const { rows } = await pool.query(
+    `SELECT id, fullName, email, profilePic, createdAt, updatedAt FROM users WHERE id = ANY($1::int[])`,
+    [intIds]
+  );
+  return rows;
+};
+
+// Only export explicit helpers (no mongoose-style findOne or findByIdAndUpdate aliases)
+const defaultExport = {
+  ensureUsersTable,
+  findUserByEmail,
+  findUserById,
+  createUser,
+  findUserByIdAndUpdate,
+  getAllUsers,
+  getUsersByIds,
+};
+
+export default defaultExport;

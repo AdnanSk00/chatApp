@@ -13,24 +13,15 @@ const pool = new Pool({
   ssl: ENV.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
 });
 
-export const initializeDB = async () => {
+// Minimal connection helper. Table creation and schema-related queries
+// should live in the respective model files (User.js, Message.js).
+export const connectDB = async () => {
   try {
-    // Ensure users table exists
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        fullName TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        profilePic TEXT DEFAULT '',
-        createdAt TIMESTAMP DEFAULT NOW(),
-        updatedAt TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    console.log('Postgres connected and users table is ready');
+    const client = await pool.connect();
+    client.release();
+    console.log('Postgres connected');
   } catch (err) {
-    console.error('Failed to initialize database:', err);
+    console.error('Failed to connect to Postgres:', err);
     throw err;
   }
 };
