@@ -4,7 +4,7 @@ import BorderAnimatedContainer from "../components/BorderAnimatedContainer";
 import { MessageCircleIcon, LockIcon, MailIcon, UserIcon, LoaderIcon } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 
-function SignUpPage() {
+const SignUpPage = () => {
   const [formData, setFormData] = useState({ fullName: "", email: "", password: "" });
   const { signup, isSigningUp, authUser } = useAuthStore();
   const navigate = useNavigate();
@@ -129,4 +129,5 @@ function SignUpPage() {
     </div>
   );
 }
+
 export default SignUpPage;
