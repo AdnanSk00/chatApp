@@ -12,9 +12,13 @@ const __dirname = path.resolve();
 
 const PORT = ENV.PORT || 3000;
 
-// payload too large error
-app.use(express.json()); // req.body
+// Ensure CORS runs before body parsing so preflight requests get the proper headers
 app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }))
+
+// Increase body size limits to accept image data URLs (base64) coming from client
+app.use(express.json({ limit: '10mb' })); // req.body
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
 app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
