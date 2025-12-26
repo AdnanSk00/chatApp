@@ -71,11 +71,11 @@ export const getChatPartners = async (req, res) => {
     const messages = await fetchMessages(loggedInUserId);
 
     const chatPartnerIds = [
-        ...new Set(
-            messages.map((msg) =>
-                String(msg.senderid) === String(loggedInUserId) ? String(msg.receiverid) : String(msg.senderid)
-            )
+      ...new Set(
+        messages.map((msg) =>
+          String(msg.senderId) === String(loggedInUserId) ? String(msg.receiverId) : String(msg.senderId)
         )
+      ),
     ];
 
     // remove any falsy values

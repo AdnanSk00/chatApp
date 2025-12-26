@@ -75,7 +75,7 @@ export const getAllUsers = async (loggedInUserId) => {
     `SELECT id, fullName, email, profilePic, createdAt, updatedAt FROM users WHERE id != $1 ORDER BY fullName ASC`,
     [loggedInUserId]
   );
-  return rows;
+  return rows.map((r) => mapUserRow(r));
 };
 
 // Get users by ids (array) and omit sensitive fields such as password
@@ -87,7 +87,7 @@ export const getUsersByIds = async (ids = []) => {
     `SELECT id, fullName, email, profilePic, createdAt, updatedAt FROM users WHERE id = ANY($1::int[])`,
     [intIds]
   );
-  return rows;
+  return rows.map((r) => mapUserRow(r));
 };
 
 // Only export explicit helpers (no mongoose-style findOne or findByIdAndUpdate aliases)
