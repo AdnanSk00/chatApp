@@ -20,9 +20,9 @@ const ChatContainer = () => {
 
   useEffect(() => {
     getMessagesByUserId(selectedUser.id);
-    //   // subscribeToMessages();
+      // subscribeToMessages();
 
-    //   // clean up
+      // clean up
     //   return () => unsubscribeFromMessages();
   },
     [selectedUser, getMessagesByUserId]);
@@ -43,11 +43,11 @@ const ChatContainer = () => {
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`chat ${msg.senderid === authUser.id ? "chat-end" : "chat-start"}`}
+                className={`chat ${msg.senderId === authUser.id ? "chat-end" : "chat-start"}`}
               >
                 <div
                   className={`chat-bubble relative ${
-                    msg.senderid === authUser.id
+                    msg.senderId === authUser.id
                       ? "bg-cyan-600 text-white"
                       : "bg-slate-800 text-slate-200"
                   }`}
@@ -57,7 +57,7 @@ const ChatContainer = () => {
                   )}
                   {msg.text && <p className="mt-2">{msg.text}</p>}
                   <p className="text-xs mt-1 opacity-75 flex items-center gap-1">
-                    {new Date(msg.createdat).toLocaleTimeString(undefined, {
+                    {new Date(msg.createdAt).toLocaleTimeString(undefined, {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
@@ -71,7 +71,7 @@ const ChatContainer = () => {
         ) : isMessagesLoading ? (
           <MessagesLoadingSkeleton />
         ) : (
-          <NoChatHistoryPlaceholder name={selectedUser.fullname} />
+          <NoChatHistoryPlaceholder name={selectedUser.fullName} />
         )}
       </div>
 

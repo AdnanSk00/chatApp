@@ -14,6 +14,21 @@ export const ensureMessagesTable = async () => {
   `);
 };
 
+// Helper to map DB row (lowercase/snake_case keys) to camelCase used in the app
+const mapMessageRow = (row) => {
+  if (!row) return null;
+  return {
+    id: row.id,
+    senderId: row.senderid ?? row.sender_id ?? row.senderId ?? null,
+    receiverId: row.receiverid ?? row.receiver_id ?? row.receiverId ?? null,
+    text: row.text ?? null,
+    image: row.image ?? row.img ?? null,
+    createdAt: row.createdat ?? row.created_at ?? row.createdAt ?? null,
+    updatedAt: row.updatedat ?? row.updated_at ?? row.updatedAt ?? null,
+  };
+};
+
+
 export const getMessages = async (myId, userToChatId, { limit = 100, before, after } = {}) => {
   // Fetch messages between two users ordered by creation time ascending
   const a = parseInt(myId, 10);
@@ -27,7 +42,7 @@ export const getMessages = async (myId, userToChatId, { limit = 100, before, aft
     [a, b, limit]
   );
 
-  return rows;
+  return rows.map((r) => mapMessageRow(r));
 };
 
 // Minimal helper to insert message (controllers can expand as needed)
@@ -36,7 +51,7 @@ export const createMessage = async ({ senderId, receiverId, text, image }) => {
     `INSERT INTO messages (senderId, receiverId, text, image) VALUES ($1, $2, $3, $4) RETURNING *`,
     [senderId, receiverId, text ?? null, image ?? null]
   );
-  return rows[0];
+  return mapMessageRow(rows[0]);
 };
 
 export const fetchMessages = async (userId) => {
@@ -45,7 +60,7 @@ export const fetchMessages = async (userId) => {
     `SELECT * FROM messages WHERE senderId = $1 OR receiverId = $1 ORDER BY createdAt DESC`,
     [id]
   );
-  return rows;
+  return rows.map((r) => mapMessageRow(r));
 };
 
 export default { ensureMessagesTable, createMessage, getMessages, fetchMessages};

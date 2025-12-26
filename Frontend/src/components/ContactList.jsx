@@ -17,17 +17,17 @@ const ContactList = () => {
     <>
       {allContacts.map((contact) => (
         <div
-          key={contact._id}
+          key={contact.id}
           className="bg-cyan-500/10 p-4 rounded-lg cursor-pointer hover:bg-cyan-500/20 transition-colors"
           onClick={() => setSelectedUser(contact)}
         >
           <div className="flex items-center gap-3">
-            {/* <div className={`avatar ${onlineUsers.includes(contact._id) ? "online" : "offline"}`}> */}
-              <div className="size-12 rounded-full">
-                <img src={contact.profilepic || "/avatar.png"} />
+            {/* <div className={`avatar ${onlineUsers.includes(contact.id) ? "online" : "offline"}`}> */}
+              <div className="size-12 rounded-full overflow-hidden relative group">
+                <img src={contact.profilePic || "/avatar.png"} className="size-full object-cover" />
               </div>
             {/* </div> */}
-            <h4 className="text-slate-200 font-medium">{contact.fullname}</h4>
+            <h4 className="text-slate-200 font-medium">{contact.fullName}</h4>
           </div>
         </div>
       ))}
