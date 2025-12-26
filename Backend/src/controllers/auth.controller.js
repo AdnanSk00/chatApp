@@ -111,6 +111,12 @@ export const updateProfile = async (req, res) => {
       const userId = req.user.id;
 
       const uploadResponse = await cloudinary.uploader.upload(profilePic)
+      console.log('cloudinary upload response:', uploadResponse);
+
+      if (!uploadResponse || !uploadResponse.secure_url) {
+        console.log('Cloudinary upload did not return secure_url. Full response:', uploadResponse);
+        return res.status(500).json({ message: 'Image upload failed' });
+      }
 
       const updatedUser = await findUserByIdAndUpdate(
         userId,
@@ -120,7 +126,7 @@ export const updateProfile = async (req, res) => {
 
       res.status(200).json(updatedUser);
     } catch (error) {
-      console.log("Error in update profile:", error);
+      console.log("Error in update profile:", error, error?.http_code, error?.statusCode, error?.message);
       res.status(500).json({ message: 'Internal server error' });
     }
 }
