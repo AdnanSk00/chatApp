@@ -7,17 +7,18 @@ import cors from 'cors';
 import authRoutes from './routes/auth.route.js';
 import messageRoutes from './routes/message.route.js';
 
-const app = express();
+import { app, server } from "./lib/socket.js";
+
 const __dirname = path.resolve();
 
 const PORT = ENV.PORT || 3000;
-
+ 
 // Ensure CORS runs before body parsing so preflight requests get the proper headers
 app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }))
 
 // Increase body size limits to accept image data URLs (base64) coming from client
-app.use(express.json({ limit: '5mb' })); // req.body
-app.use(express.urlencoded({ limit: '5mb', extended: true }));
+app.use(express.json({ limit: '10mb' })); // req.body
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 app.use(cookieParser());
 
@@ -45,7 +46,7 @@ import { ensureMessagesTable } from './models/Message.js';
     await ensureUsersTable();
     await ensureMessagesTable();
 
-    const server = app.listen(PORT, () => console.log("Server is running on port: " + PORT));
+    server.listen(PORT, () => console.log("Server is running on port: " + PORT));
     server.on('error', (err) => {
       if (err.code === 'EADDRINUSE') {
         console.error(`Port ${PORT} is already in use. Stop the process using it or set a different PORT in your .env file.`);

@@ -23,10 +23,10 @@ const ChatContainer = () => {
       // subscribeToMessages();
 
       // clean up
-    //   return () => unsubscribeFromMessages();
+      // return () => unsubscribeFromMessages();
   },
-    [selectedUser, getMessagesByUserId]);
-  //  [selectedUser, getMessagesByUserId, subscribeToMessages, unsubscribeFromMessages]);
+  [selectedUser, getMessagesByUserId]);
+  // [selectedUser, getMessagesByUserId, subscribeToMessages, unsubscribeFromMessages]);
 
   useEffect(() => {
     if (messageEndRef.current) {

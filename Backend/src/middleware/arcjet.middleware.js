@@ -1,13 +1,13 @@
 import aj from "../lib/arcjet.js";
 import { isSpoofedBot } from "@arcjet/inspect";
-import { ENV } from "../lib/env.js";
+// import { ENV } from "../lib/env.js";
 
 export const arcjetProtection = async (req, res, next) => {
     try {
         // Bypass Arcjet in development or when no key is configured to avoid blocking local tools (Postman, curl)
-        if (!ENV.ARCJET_KEY || ENV.NODE_ENV !== 'production') {
-            return next();
-        }
+        // if (!ENV.ARCJET_KEY || ENV.NODE_ENV !== 'production') {
+        //     return next();
+        // }
 
         const decision = await aj.protect(req)
 
