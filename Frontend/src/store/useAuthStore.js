@@ -105,6 +105,18 @@ export const useAuthStore = create((set, get) => ({
             const normalized = userIds.map((id) => Number(id));
             set({ onlineUsers: normalized });
         });
+
+        // listen for archived updates (sync across the user's devices)
+        socket.on('archivedUpdated', async () => {
+            try {
+                const { useChatStore } = await import('./useChatStore');
+                const chatState = useChatStore.getState();
+                if (chatState.getAllContacts) chatState.getAllContacts();
+                if (chatState.getMyChatPartners) chatState.getMyChatPartners();
+            } catch (err) {
+                console.warn('Failed to refresh chat lists on archived update:', err);
+            }
+        });
     },
 
     disconnectSocket: () => {

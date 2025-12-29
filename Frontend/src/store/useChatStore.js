@@ -45,7 +45,7 @@ export const useChatStore = create((set, get) => ({
             set({ isUsersLoading: false });
         }
     },
-
+    
     getMessagesByUserId: async (userId) => {
         set({ isMessagesLoading: true });
         try {
@@ -116,5 +116,40 @@ export const useChatStore = create((set, get) => ({
         if (!socket) return;
         socket.off("newMessage");
     },
+    
+    archiveUser: async (userId) => {
+        try {
+            const res = await axiosInstance.post(`/users/${userId}/archive`);
+            const archived = (res.data.archivedChats || []).map((v) => Number(v));
 
+            // update chats and contacts locally based on the returned archived ids
+            set((state) => ({
+                chats: state.chats.map((c) => ({ ...c, isArchived: archived.includes(Number(c.id)) })),
+                allContacts: state.allContacts.map((c) => ({ ...c, isArchived: archived.includes(Number(c.id)) })),
+            }));
+
+            toast.success('Chat archived');
+        } catch (error) {
+            console.error('Archive failed', error);
+            toast.error(error.response?.data?.message || 'Archive failed');
+        }
+    },
+
+    unarchiveUser: async (userId) => {
+        try {
+            const res = await axiosInstance.post(`/users/${userId}/unarchive`);
+            const archived = (res.data.archivedChats || []).map((v) => Number(v));
+
+            set((state) => ({
+                chats: state.chats.map((c) => ({ ...c, isArchived: archived.includes(Number(c.id)) })),
+                allContacts: state.allContacts.map((c) => ({ ...c, isArchived: archived.includes(Number(c.id)) })),
+            }));
+
+            toast.success('Chat unarchived');
+        } catch (error) {
+            console.error('Unarchive failed', error);
+            toast.error(error.response?.data?.message || 'Unarchive failed');
+        }
+    },
+    
 }));
