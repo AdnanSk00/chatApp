@@ -1,13 +1,19 @@
 import cloudinary from '../lib/cloudinary.js';
 import { createMessage, fetchMessages, getMessages } from '../models/Message.js';
-import { findUserById, getAllUsers, getUsersByIds } from '../models/User.js';
+import { findUserById, getAllUsers, getUsersByIds, getArchivedChats } from '../models/User.js';
 import { io, getReceiverSocketId } from '../lib/socket.js';
 
 export const getAllContacts = async (req, res) => {
   try {
     const loggedInUserId = req.user.id;
     const contacts = await getAllUsers(loggedInUserId);
-    res.status(200).json(contacts);
+    const archived = await getArchivedChats(loggedInUserId);
+    const archivedSet = new Set((archived || []).map((v) => String(v)));
+
+    // add isArchived flag per contact
+    const contactsWithArchive = contacts.map((c) => ({ ...c, isArchived: archivedSet.has(String(c.id)) }));
+
+    res.status(200).json(contactsWithArchive);
   } catch (error) {
     console.log('Error in getAllContacts:', error);
     res.status(500).json({ message: 'Server error' });
@@ -88,7 +94,12 @@ export const getChatPartners = async (req, res) => {
 
     const chatPartners = partnerIdsFiltered.length === 0 ? [] : await getUsersByIds(partnerIdsFiltered);
 
-    res.status(200).json(chatPartners);
+    // mark archived partners
+    const archived = await getArchivedChats(loggedInUserId);
+    const archivedSet = new Set((archived || []).map((v) => String(v)));
+    const partnersWithArchive = chatPartners.map((p) => ({ ...p, isArchived: archivedSet.has(String(p.id)) }));
+
+    res.status(200).json(partnersWithArchive);
 
   } catch (error) {
     console.log("Error in getChatPartners: ", error.message);

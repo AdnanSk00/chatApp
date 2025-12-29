@@ -1,6 +1,7 @@
 import pool from '../lib/db.js';
 
 export const ensureUsersTable = async () => {
+  // create table if not exists and ensure archived_chats column exists for storing archived partner ids
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
@@ -8,9 +9,20 @@ export const ensureUsersTable = async () => {
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
       profilePic TEXT DEFAULT '',
+      archived_chats JSONB DEFAULT '[]'::jsonb,
       createdAt TIMESTAMP DEFAULT NOW(),
       updatedAt TIMESTAMP DEFAULT NOW()
     );
+  `);
+
+  // Backfill for existing tables: add column if it doesn't exist
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='archived_chats') THEN
+        ALTER TABLE users ADD COLUMN archived_chats JSONB DEFAULT '[]'::jsonb;
+      END IF;
+    END$$;
   `);
 };
 
@@ -23,6 +35,7 @@ const mapUserRow = (row) => {
     email: row.email ?? null,
     password: row.password ?? null,
     profilePic: row.profilepic ?? row.profile_pic ?? row.profilePic ?? '',
+    archivedChats: row.archived_chats ?? row.archivedChats ?? [],
     createdAt: row.createdat ?? row.created_at ?? row.createdAt ?? null,
     updatedAt: row.updatedat ?? row.updated_at ?? row.updatedAt ?? null,
   };
@@ -90,6 +103,31 @@ export const getUsersByIds = async (ids = []) => {
   return rows.map((r) => mapUserRow(r));
 };
 
+export const getArchivedChats = async (userId) => {
+  const { rows } = await pool.query('SELECT archived_chats FROM users WHERE id = $1', [userId]);
+  return rows[0]?.archived_chats ?? [];
+};
+
+export const addArchivedChat = async (userId, partnerId) => {
+  const current = await getArchivedChats(userId);
+  const numPartnerId = parseInt(partnerId, 10);
+  if (!Number.isInteger(numPartnerId)) throw new Error('Invalid partner id');
+  const set = new Set(current.map((v) => parseInt(v, 10)).filter(Boolean));
+  set.add(numPartnerId);
+  const newArr = Array.from(set);
+  await pool.query('UPDATE users SET archived_chats = $1 WHERE id = $2', [JSON.stringify(newArr), userId]);
+  return newArr;
+};
+
+export const removeArchivedChat = async (userId, partnerId) => {
+  const current = await getArchivedChats(userId);
+  const numPartnerId = parseInt(partnerId, 10);
+  const newArr = current.filter((v) => parseInt(v, 10) !== numPartnerId);
+  await pool.query('UPDATE users SET archived_chats = $1 WHERE id = $2', [JSON.stringify(newArr), userId]);
+  return newArr;
+};
+
+
 // Only export explicit helpers (no mongoose-style findOne or findByIdAndUpdate aliases)
 const defaultExport = {
   ensureUsersTable,
@@ -99,6 +137,9 @@ const defaultExport = {
   findUserByIdAndUpdate,
   getAllUsers,
   getUsersByIds,
+  getArchivedChats,
+  addArchivedChat,
+  removeArchivedChat,
 };
 
 export default defaultExport;
